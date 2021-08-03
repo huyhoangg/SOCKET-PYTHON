@@ -6,9 +6,9 @@ user = Query()
 def check_user_existed(userInfo):
     result = db.search(user.username == userInfo)
     if result:
-        return False
-    else :
         return True
+    else :
+        return False
 
 def insert_data(name, psw):
     db.insert({'username': name, 'password': psw, 'fullname': '', 'dob': '',
@@ -50,4 +50,5 @@ def add_win(name):
     result = db.search(user.username == name)
     win = result[0]['point'] + 1
     db.update({'point': win }, user.username == name)
+
 

@@ -1,8 +1,8 @@
 import socket
 import threading
-import main as f1
+import db as db
 
-HOST = "192.168.1.8"
+HOST = "127.0.0.1"
 PORT = 20202
 FORMAT = "utf8"
 
@@ -11,78 +11,32 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(5)
 
-clients = []
-names = []
+online= []
 
 print("server is listening")
 
-def broadcast(msg):
-    for client in clients:
-        client.send(msg)
+def signUp():
+    conn, addr = s.accept()
+    user = conn.recv(1024).decode(FORMAT)
+    #check database
+    check = db.check_user_existed(user)
+    if check:
+        while check:
+            conn.send("existed".encode(FORMAT))
+            user = conn.recv(1024).decode(FORMAT)
+            if not db.check_user_existed(user):
+                conn.send("1".encode(FORMAT))
+                break
+            else:
+                check = True
+    else:
+        conn.send("psw".encode(FORMAT))
 
-def handle_client(conn):
-    while True:
-        try:
-            msg = conn.recv(1024)
-            broadcast(msg)
-        except:
-            index = clients.index(conn)
-            clients.remove(conn)
-            conn.close()
-            name = names[index]
-            broadcast(f'{name} has left the room !'.encode(FORMAT))
-            break
+    psw = conn.recv(1024).decode(FORMAT)
 
-def receive():
-    while True:
-        conn, addr = s.accept()
-        print(f'{str(addr)} connected')
+    db.insert_data(user, psw)
 
-        conn.send('name'.encode(FORMAT))
-        name = conn.recv(1024).decode(FORMAT)
-        names.append(name)
-        clients.append(conn)
-
-        print(f'name of client is {name}')
-        broadcast(f'{name} has joined the chat'.encode(FORMAT))
-        conn.send('connected to chatroom'.encode(FORMAT))
-
-        thread = threading.Thread(target = handle_client, args=(conn,))
-        thread.start()
-
-def register():
-    while True:
-        conn, addr = s.accept()
-        print(f'{str(addr)} connected')
-
-        username = conn.recv(1024).decode(FORMAT)
-
-        if f1.checkUsername(username):
-            conn.send('Existed username, try others :'.encode(FORMAT))
-            print("")
-            username = conn.recv(1024).decode(FORMAT)
-            print("")
-            psw = conn.recv(1024).decode(FORMAT)
-            f1.writeInfo(username,psw)
-        else:
-            conn.send('Enter password :'.encode(FORMAT))
-            psw = conn.recv(1024).decode(FORMAT)
-            f1.writeInfo(username,psw)
-
-        conn.send('Account created successfully'.encode(FORMAT))
-
-        thread = threading.Thread(target=register)
-        thread.start()
-
-
-
-
-register()
-
-
-
-
-
+signUp()
 
 
 
