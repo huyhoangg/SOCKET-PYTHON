@@ -1,73 +1,31 @@
 import socket
 import threading
 
-HOST = "192.168.1.8"
+HOST = "127.0.0.1"
 PORT = 20202
 FORMAT = "utf8"
-
-username = input("please enter your name: ")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((HOST, PORT))
 
-def receive():
-    while True:
-        try:
+def signUp():
+    #client nhap username
+    user = input("input username:")
+    client.sendall(user.encode(FORMAT))
+
+    msg = client.recv(1024).decode(FORMAT)
+    if msg == "existed":
+        while msg == "existed":
+            user = input("try another username:")
+            client.sendall(user.encode(FORMAT))
             msg = client.recv(1024).decode(FORMAT)
-            if msg == 'name':
-                client.send(username.encode(FORMAT))
-            else:
-                print(msg)
-        except:
-            print("error dectected")
-            client.close()
-            break
+            if msg == "1":
+                break
 
-def write():
-    while True:
-        msg = f'{username} :{input("")}'
-        client.send((msg.encode(FORMAT)))
+    psw = input("input password :")
+    client.sendall(psw.encode(FORMAT))
 
-def register():
-
-    print('[Register]')
-
-    username = input("Enter username :")
-    client.send(username.encode(FORMAT))
-    print("")
-
-    msg = client.recv(1024).decode(FORMAT)
-
-    if msg == "Existed username, try others :":
-        print(msg)
-        username = input("")
-        client.send(username.encode(FORMAT))
-        print('Enter password :')
-        psw = input("")
-        client.send(psw.encode(FORMAT))
-    else:
-        print(msg)
-        psw = input("")
-        client.send(psw.encode(FORMAT))
-
-    msg = client.recv(1024).decode(FORMAT)
-    print(msg)
+    print("sign up successfully")
 
 
-
-register_thread = threading.Thread(target=register)
-register_thread.start()
-
-
-
-'''
-
-
-receive_thread = threading.Thread(target = receive)
-receive_thread.start()
-
-write_thread = threading.Thread(target = write)
-write_thread.start()
-'''
-
-
+signUp()
