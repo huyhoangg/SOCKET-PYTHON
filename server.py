@@ -77,7 +77,7 @@ def register():
 
 
 
-
+register()
 
 
 
