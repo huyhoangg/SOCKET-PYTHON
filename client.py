@@ -59,16 +59,37 @@ def login():
                 break
     print("[LOGIN] success")
 
-login()
+
+def change_password():
+    user = input("input username :")
+    client.sendall(user.encode(FORMAT))
+
+    msg = client.recv(1024).decode(FORMAT)
+    if msg == "not existed":
+        while msg == "not existed":
+            user = input("not existed username, input again: ")
+            client.sendall(user.encode(FORMAT))
+            msg = client.recv(1024).decode(FORMAT)
+            if msg == "ready":
+                break
+
+    psw = stdiomask.getpass("input last password :")
+    client.sendall(psw.encode(FORMAT))
+
+    msg = client.recv(1024).decode(FORMAT)
+    if msg == "err":
+        while msg == "err":
+            psw = stdiomask.getpass("wrong password, input password again :")
+            client.sendall(psw.encode(FORMAT))
+            msg = client.recv(1024).decode(FORMAT)
+            if msg == "ready":
+                break
+
+    new_psw = stdiomask.getpass("input your new password :")
+    client.sendall(new_psw.encode(FORMAT))
+    print("[PASSWORD] successfully changed")
 
 
 
-
-
-
-
-
-
-
-
+change_password()
 

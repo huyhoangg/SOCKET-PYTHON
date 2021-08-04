@@ -28,6 +28,8 @@ def update_info(type, name, info):
         db.update({'dob': info}, user.username == name)
     elif type == 'note':
         db.update({'note': info}, user.username == name)
+    elif type == 'password':
+        db.update({'password': info}, user.username == name)
 
 def check_user_info(type, name):
     result = db.search(user.username == name)
