@@ -90,6 +90,59 @@ def change_password():
     print("[PASSWORD] successfully changed")
 
 
+def check_user():
+    user = input("input username :")
+    client.sendall(user.encode(FORMAT))
 
-change_password()
+    msg = client.recv(1024).decode(FORMAT)
+    if msg == "not existed":
+        print("not existed user")
+        client.close()
+    else:
+        print("option : [-find] [-online] [-show_date] [-show_fullname] "
+              "[-show_note] [-show_all] [-show_point]")
+        type = input("choice :")
+
+        if type == '-show_fullname':
+            client.sendall(type.encode(FORMAT))
+        elif type == '-show_date':
+            client.sendall(type.encode(FORMAT))
+        elif type == '-show_note':
+            client.sendall(type.encode(FORMAT))
+        elif type == '-show_point':
+            client.sendall(type.encode(FORMAT))
+        elif type == '-show_all':
+            client.sendall(type.encode(FORMAT))
+        elif type == '-find':
+            client.sendall(type.encode(FORMAT))
+            name = input("input someone :")
+            client.sendall(name.encode(FORMAT))
+        elif type == "-online":
+            pass
+
+        else:
+            print("not regconised command")
+            client.close()
+
+        result = client.recv(1024).decode(FORMAT)
+        print(result)
+
+def setup_info(user):
+    print("option : [-fullname] [-date] [-note]")
+    opt = input("chose option :")
+
+    if opt == "-fullname":
+        client.sendall(opt.encode(FORMAT))
+        change = input("update fullname :")
+        client.sendall(change.encode(FORMAT))
+
+    elif opt == "-date":
+        client.sendall(opt.encode(FORMAT))
+        change = input("update date of birth (dd/mm/yy) :")
+        client.sendall(change.encode(FORMAT))
+
+    elif opt == "-note":
+        client.sendall(opt.encode(FORMAT))
+        change = input("update some note :")
+        client.sendall(change.encode(FORMAT))
 

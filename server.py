@@ -112,19 +112,42 @@ def change_password():
     new_psw = conn.recv(1024).decode(FORMAT)
     db.update_info('password', user, new_psw)
 
+def check_user():
+    user = conn.recv(1024).decode(FORMAT)
+
+    # check database
+    existed = db.check_user_existed(user)
+    if not existed:
+        conn.send("not existed".encode(FORMAT))
+    else:
+        conn.send("existed".encode(FORMAT))
+        opt = conn.recv(1024).decode(FORMAT)
+        if opt == '-find':
+            name = conn.recv(1024).decode(FORMAT)
+            if db.check_user_existed(name):
+                conn.send(f"account named {name} existed".encode(FORMAT))
+            else:
+                conn.send(f"account named {name} not existed".encode(FORMAT))
+
+        else:
+            result = db.check_user_info(opt, user)
+            conn.sendall(result.encode(FORMAT))
 
 
+def setup_info(user):
+    opt = conn.recv(1024).decode(FORMAT)
 
+    if opt == '-fullname':
+        change = conn.recv(1024).decode(FORMAT)
+        db.update_info('fullname', user, change)
 
-change_password()
+    elif opt == '-date':
+        change = conn.recv(1024).decode(FORMAT)
+        db.update_info('dob', user, change)
 
-
-
-
-
-
-
-
+    elif opt == '-note':
+        change = conn.recv(1024).decode(FORMAT)
+        db.update_info('note', user, change)
 
 
 
