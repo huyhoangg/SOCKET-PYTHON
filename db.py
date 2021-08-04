@@ -50,5 +50,3 @@ def add_win(name):
     result = db.search(user.username == name)
     win = result[0]['point'] + 1
     db.update({'point': win }, user.username == name)
-
-

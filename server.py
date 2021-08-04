@@ -14,10 +14,11 @@ s.listen(5)
 online= []
 
 print("server is listening")
+conn, addr = s.accept()
 
 def signUp():
-    conn, addr = s.accept()
     user = conn.recv(1024).decode(FORMAT)
+
     #check database
     check = db.check_user_existed(user)
     if check:
@@ -25,7 +26,7 @@ def signUp():
             conn.send("existed".encode(FORMAT))
             user = conn.recv(1024).decode(FORMAT)
             if not db.check_user_existed(user):
-                conn.send("1".encode(FORMAT))
+                conn.send("ready".encode(FORMAT))
                 break
             else:
                 check = True
@@ -36,7 +37,61 @@ def signUp():
 
     db.insert_data(user, psw)
 
-signUp()
+
+def login():
+    user = conn.recv(1024).decode(FORMAT)
+
+    #check database
+    existed = db.check_user_existed(user)
+
+    if not existed:
+        while not existed:
+            conn.send("not existed".encode(FORMAT))
+            user = conn.recv(1024).decode(FORMAT)
+            if db.check_user_existed(user):
+                conn.send("ready".encode(FORMAT))
+                break
+            else:
+                existed = False
+    else:
+        conn.send("psw".encode(FORMAT))
+
+    psw = conn.recv(1024).decode(FORMAT)
+
+    match = db.check_pass(user, psw)
+
+    if match:
+        conn.sendall("success".encode(FORMAT))
+    else:
+        while not match:
+            conn.send("err".encode(FORMAT))
+            psw = conn.recv(1024).decode(FORMAT)
+            if db.check_pass(user, psw):
+                conn.send("ready".encode(FORMAT))
+                online.append(user)
+                break
+            else:
+                match = False
+    print(user, psw)
+
+login()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
