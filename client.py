@@ -9,7 +9,7 @@ FORMAT = "utf8"
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((HOST, PORT))
 
-def signUp():
+def signUp(client):
     print("[REGISTER]")
 
     #client nhap username
@@ -29,7 +29,7 @@ def signUp():
     psw = stdiomask.getpass("input password :")
     client.sendall(psw.encode(FORMAT))
 
-    print("sign up successfully")
+    print("[SIGN_UP] successfully")
 
 
 def login():
@@ -60,7 +60,7 @@ def login():
     print("[LOGIN] success")
 
 
-def change_password():
+def change_password(client):
     user = input("input username :")
     client.sendall(user.encode(FORMAT))
 
@@ -90,7 +90,8 @@ def change_password():
     print("[PASSWORD] successfully changed")
 
 
-def check_user():
+def check_user(client):
+    print("[USER CHECK]")
     user = input("input username :")
     client.sendall(user.encode(FORMAT))
 
@@ -127,7 +128,7 @@ def check_user():
         result = client.recv(1024).decode(FORMAT)
         print(result)
 
-def setup_info(user):
+def setup_info(client, user):
     print("option : [-fullname] [-date] [-note]")
     opt = input("chose option :")
 
@@ -135,14 +136,51 @@ def setup_info(user):
         client.sendall(opt.encode(FORMAT))
         change = input("update fullname :")
         client.sendall(change.encode(FORMAT))
+        print("[USER] information changed")
 
     elif opt == "-date":
         client.sendall(opt.encode(FORMAT))
         change = input("update date of birth (dd/mm/yy) :")
         client.sendall(change.encode(FORMAT))
+        print("[USER] information changed")
 
     elif opt == "-note":
         client.sendall(opt.encode(FORMAT))
         change = input("update some note :")
         client.sendall(change.encode(FORMAT))
+        print("[USER] information changed")
 
+    else:
+        print("not valid command")
+
+
+def run_client():
+
+    while True:
+        print("option : [login] [signup] [changepass] "
+              "[checkuser] [setupinfo] [quit]")
+        opt = input("choice :")
+        client.sendall(opt.encode(FORMAT))
+
+        if opt == 'login':
+            login()
+
+        elif opt == 'signup' :
+            signUp(client)
+
+        elif opt == 'changepass':
+            change_password(client)
+
+        elif opt == 'checkuser':
+            check_user(client)
+
+        elif opt == 'setupinfo':
+            user = 'hoang'
+            setup_info(client, user)
+
+        elif opt == 'quit':
+            print("byebye")
+            client.close()
+            break
+
+run_client()

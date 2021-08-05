@@ -13,10 +13,7 @@ s.listen(5)
 
 online= []
 
-print("server is listening")
-conn, addr = s.accept()
-
-def signUp():
+def signUp(conn):
     user = conn.recv(1024).decode(FORMAT)
 
     #check database
@@ -38,7 +35,7 @@ def signUp():
     db.insert_data(user, psw)
 
 
-def login():
+def login(conn):
     user = conn.recv(1024).decode(FORMAT)
 
     #check database
@@ -72,9 +69,9 @@ def login():
                 break
             else:
                 match = False
-    print(user, psw)
 
-def change_password():
+
+def change_password(conn):
     user = conn.recv(1024).decode(FORMAT)
 
     # check database
@@ -112,7 +109,7 @@ def change_password():
     new_psw = conn.recv(1024).decode(FORMAT)
     db.update_info('password', user, new_psw)
 
-def check_user():
+def check_user(conn):
     user = conn.recv(1024).decode(FORMAT)
 
     # check database
@@ -134,7 +131,7 @@ def check_user():
             conn.sendall(result.encode(FORMAT))
 
 
-def setup_info(user):
+def setup_info(conn, user):
     opt = conn.recv(1024).decode(FORMAT)
 
     if opt == '-fullname':
@@ -150,4 +147,53 @@ def setup_info(user):
         db.update_info('note', user, change)
 
 
+def handle_client(conn, addr):
+    while True:
+        try:
+            option = conn.recv(1024).decode(FORMAT)
 
+            if option == 'login':
+                login(conn)
+
+            elif option == 'signup':
+                signUp(conn)
+
+            elif option == 'changepass':
+                change_password(conn)
+
+            elif option == 'checkuser':
+                check_user(conn)
+
+            elif option == 'setupinfo':
+                user = 'hoang'
+                setup_info(conn, user)
+
+            elif option == 'quit':
+                print(f"disconnected from {addr}")
+                conn.close()
+                break
+
+        except:
+            print(f"disconected from {addr} ")
+            break
+    conn.close()
+
+
+def runServer():
+    try:
+        print("server is listening")
+        while True:
+            conn, addr = s.accept()
+            print(f"connected with address :{addr}")
+            clientThread = threading.Thread(target=handle_client, args=(conn, addr))
+            clientThread.start()
+    except :
+        print("failed to connected to client")
+
+    finally:
+        s.close()
+        print("end")
+
+
+sThread = threading.Thread(target=runServer)
+sThread.start()
