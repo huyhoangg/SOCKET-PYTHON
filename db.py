@@ -34,10 +34,10 @@ def update_info(type, name, info):
 def check_user_info(type, name):
     result = db.search(user.username == name)
 
-    fname = f"fullname :{result[0]['fullname']}"
-    day = f"dob : {result[0]['dob']}"
-    note = f"note : {result[0]['note']}"
-    point = f"win point : {result[0]['point']}"
+    fname = f"fullname of {name} :{result[0]['fullname']}"
+    day = f"dob of {name} : {result[0]['dob']}"
+    note = f"note of {name} : {result[0]['note']}"
+    point = f"win point of {name} : {result[0]['point']}"
     alldata = f"fullname : {fname} || dob : {day} || note : {note} || win point : {point}"
 
     if type == '-show_fullname':
@@ -55,4 +55,3 @@ def add_win(name):
     result = db.search(user.username == name)
     win = result[0]['point'] + 1
     db.update({'point': win }, user.username == name)
-

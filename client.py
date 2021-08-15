@@ -1,6 +1,8 @@
 import socket
 import threading
 import stdiomask
+from tkinter import *
+
 
 HOST = "127.0.0.1"
 PORT = 20202
@@ -91,8 +93,8 @@ def change_password(client):
 
 
 def check_user(client):
-    print("[USER CHECK]")
-    user = input("input username :")
+    print("[USER CHECKING PLACE]")
+    user = input("Who are you looking for :")
     client.sendall(user.encode(FORMAT))
 
     msg = client.recv(1024).decode(FORMAT)
@@ -116,14 +118,14 @@ def check_user(client):
             client.sendall(type.encode(FORMAT))
         elif type == '-find':
             client.sendall(type.encode(FORMAT))
-            name = input("input someone :")
-            client.sendall(name.encode(FORMAT))
+
         elif type == "-online":
-            pass
+            client.sendall(type.encode(FORMAT))
 
         else:
-            print("not regconised command")
+            print('not valid command')
             client.close()
+            return
 
         result = client.recv(1024).decode(FORMAT)
         print(result)
@@ -183,4 +185,112 @@ def run_client():
             client.close()
             break
 
-run_client()
+
+def register():
+    global screenRegis
+    screenRegis = Toplevel(screen)
+    screenRegis.title("Register")
+    screenRegis.geometry("400x300")
+
+    global username
+    global password
+    global username_entry
+    global password_entry
+    username = StringVar()
+    password = StringVar()
+    Label(screenRegis, text="Register Form", bg="grey", font=("Calibri", 13), width="25").pack()
+    Label(screenRegis, text="").pack()
+    Label(screenRegis, text="").pack()
+
+    username_lable = Label(screenRegis, text="Username  ")
+    username_lable.pack()
+
+    username_entry = Entry(screenRegis, textvariable=username, width="25")
+    username_entry.pack()
+    Label(screenRegis, text="").pack()
+
+    password_lable = Label(screenRegis, text="Password  ")
+
+    password_lable.pack()
+    password_entry = Entry(screenRegis, textvariable=password, width="25")
+    password_entry.pack()
+    password_lable.pack()
+    Label(screenRegis, text="").pack()
+    Button(screenRegis, text="Register", width=10, height=1, bg="#0d8bf0", fg="black").pack()
+
+def checkuser():
+    client.sendall("checkdata".encode(FORMAT))
+
+    user = usernameLogin.get()
+    client.sendall(user.encode(FORMAT))
+    check = client.recv(1024).decode(FORMAT)
+    if check == "false":
+        Label(screenLogin, text="Account not found",fg="red", font=("Calibri", 10), width="25").place(x=100, y=90)
+    else:
+        Label(screenLogin, text="Account found",fg="green", font=("Calibri", 10), width="25").place(x=100, y=90)
+        b["state"] = "normal"
+
+def validate():
+    client.send("login".encode(FORMAT))
+
+    user = usernameLogin.get()
+    psw = passwordLogin.get()
+
+    client.send(user.encode(FORMAT))
+    client.recv(1024)
+    client.send(psw.encode(FORMAT))
+    msg = client.recv(1024).decode()
+    if msg == "success":
+        Label(screenLogin, text="Login success",fg="green", font=("Calibri", 13), width="25").place(x=90, y=200)
+    else:
+        Label(screenLogin, text="Wrong password",fg="red", font=("Calibri", 13), width="25").place(x=90, y=200)
+
+def login1():
+    global screenLogin
+    screenLogin = Toplevel(screen)
+    screenLogin.title("Login")
+    screenLogin.geometry("400x300")
+
+    global usernameLogin
+    global passwordLogin
+
+    usernameLogin = StringVar()
+    passwordLogin = StringVar()
+
+    global username_entry1
+    global password_entry1
+
+    Label(screenLogin, text="Login", bg="grey", font=("Calibri", 13), width="25").pack()
+    Label(screenLogin, text="").pack()
+    Label(screenLogin, text="Username ").pack()
+    username_entry1 = Entry(screenLogin, textvariable=usernameLogin, width="25")
+    username_entry1.pack()
+    Button(screenLogin, text = "Check", command=checkuser).place(x= 300, y=66)
+
+    Label(screenLogin, text="").pack()
+    Label(screenLogin, text="Password  ").pack()
+    password_entry1 = Entry(screenLogin, textvariable=passwordLogin, width="25", show ="*")
+    password_entry1.pack()
+    Label(screenLogin, text="").pack()
+
+    global b
+    b= Button(screenLogin, text="Login",state="disabled", width=10, height=1, bg="black", fg="white", command = validate)
+    b.pack()
+
+def main_screen():
+    global screen
+    screen = Tk()
+    screen.geometry("500x300")
+    screen.title("Account Login")
+    Label(text="Select Your Choice", bg="#f96854", width="300", height="2", font=("Calibri", 15)).pack()
+    Label(text="").pack()
+    Label(text="").pack()
+    Button(text="Login", height="2", width="35", command=login1).pack()
+    Label(text="").pack()
+    Button(text="Register", height="2", width="35", command=register).pack()
+    Label(text="").pack()
+
+    screen.mainloop()
+
+
+main_screen()

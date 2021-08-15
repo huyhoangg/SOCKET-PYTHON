@@ -11,7 +11,30 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(5)
 
-online= []
+online = []
+id = []
+
+def isOnline(online, name):
+    for i in range(len(online)):
+        if online[i] == name:
+            return True
+    return False
+
+def remove_online(addr):
+    s = str(addr)
+    for i in range(len(id)):
+        account = id[i].split('-')
+        if account[0] == s:
+            name = account[1]
+            id.pop(i)
+            online.remove(name)
+            break
+
+def add_id(user, addr):
+    s = str(addr) + '-' + user
+    id.append(s)
+    online.append(user)
+
 
 def signUp(conn):
     user = conn.recv(1024).decode(FORMAT)
@@ -34,41 +57,39 @@ def signUp(conn):
 
     db.insert_data(user, psw)
 
-
-def login(conn):
+def checkdata(conn):
     user = conn.recv(1024).decode(FORMAT)
-
-    #check database
     existed = db.check_user_existed(user)
-
-    if not existed:
-        while not existed:
-            conn.send("not existed".encode(FORMAT))
-            user = conn.recv(1024).decode(FORMAT)
-            if db.check_user_existed(user):
-                conn.send("ready".encode(FORMAT))
-                break
-            else:
-                existed = False
+    if existed:
+        conn.send("true".encode(FORMAT))
     else:
-        conn.send("psw".encode(FORMAT))
+        conn.send("false".encode(FORMAT))
+
+def login(conn, addr):
+    user = conn.recv(1024).decode(FORMAT)
+    print(user)
+
+    conn.send("a".encode(FORMAT))
 
     psw = conn.recv(1024).decode(FORMAT)
-
+    print(psw)
     match = db.check_pass(user, psw)
-
+    print(match)
     if match:
         conn.sendall("success".encode(FORMAT))
+        add_id(user, addr)
     else:
-        while not match:
-            conn.send("err".encode(FORMAT))
-            psw = conn.recv(1024).decode(FORMAT)
-            if db.check_pass(user, psw):
-                conn.send("ready".encode(FORMAT))
-                online.append(user)
-                break
-            else:
-                match = False
+        conn.sendall("error".encode(FORMAT))
+
+        # while not match:
+        #     conn.send("err".encode(FORMAT))
+        #     psw = conn.recv(1024).decode(FORMAT)
+        #     if db.check_pass(user, psw):
+        #         conn.send("ready".encode(FORMAT))
+        #         add_id(user, addr)
+        #         break
+        #     else:
+        #         match = False
 
 
 def change_password(conn):
@@ -101,7 +122,6 @@ def change_password(conn):
             psw = conn.recv(1024).decode(FORMAT)
             if db.check_pass(user, psw):
                 conn.send("ready".encode(FORMAT))
-                online.append(user)
                 break
             else:
                 match = False
@@ -120,11 +140,15 @@ def check_user(conn):
         conn.send("existed".encode(FORMAT))
         opt = conn.recv(1024).decode(FORMAT)
         if opt == '-find':
-            name = conn.recv(1024).decode(FORMAT)
-            if db.check_user_existed(name):
-                conn.send(f"account named {name} existed".encode(FORMAT))
+            if db.check_user_existed(user):
+                conn.send(f"account named {user} existed".encode(FORMAT))
             else:
-                conn.send(f"account named {name} not existed".encode(FORMAT))
+                conn.send(f"account named {user} not existed".encode(FORMAT))
+        elif opt == '-online':
+            if isOnline(online, user):
+                conn.send(f"{user} now online".encode(FORMAT))
+            else:
+                conn.send(f"{user} not active".encode(FORMAT))
 
         else:
             result = db.check_user_info(opt, user)
@@ -153,7 +177,10 @@ def handle_client(conn, addr):
             option = conn.recv(1024).decode(FORMAT)
 
             if option == 'login':
-                login(conn)
+                login(conn, addr)
+
+            elif option == 'checkdata':
+                checkdata(conn)
 
             elif option == 'signup':
                 signUp(conn)
@@ -170,11 +197,13 @@ def handle_client(conn, addr):
 
             elif option == 'quit':
                 print(f"disconnected from {addr}")
+                remove_online(addr)
                 conn.close()
                 break
 
         except:
             print(f"disconected from {addr} ")
+            remove_online(addr)
             break
     conn.close()
 
