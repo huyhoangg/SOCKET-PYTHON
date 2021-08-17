@@ -39,20 +39,7 @@ def add_id(user, addr):
 def signUp(conn):
     user = conn.recv(1024).decode(FORMAT)
 
-    #check database
-    check = db.check_user_existed(user)
-    if check:
-        while check:
-            conn.send("existed".encode(FORMAT))
-            user = conn.recv(1024).decode(FORMAT)
-            if not db.check_user_existed(user):
-                conn.send("ready".encode(FORMAT))
-                break
-            else:
-                check = True
-    else:
-        conn.send("psw".encode(FORMAT))
-
+    conn.send("a".encode(FORMAT))
     psw = conn.recv(1024).decode(FORMAT)
 
     db.insert_data(user, psw)
@@ -65,108 +52,81 @@ def checkdata(conn):
     else:
         conn.send("false".encode(FORMAT))
 
+def checkpass(conn):
+    conn.send("h".encode(FORMAT))
+    user = conn.recv(1024).decode(FORMAT)
+
+    conn.send("h".encode(FORMAT))
+    oldPass = conn.recv(1024).decode(FORMAT)
+
+    check = db.check_pass(user, oldPass)
+    if check:
+        conn.send("true".encode(FORMAT))
+    else:
+        conn.send("false".encode(FORMAT))
+
 def login(conn, addr):
     user = conn.recv(1024).decode(FORMAT)
-    print(user)
 
     conn.send("a".encode(FORMAT))
 
     psw = conn.recv(1024).decode(FORMAT)
-    print(psw)
     match = db.check_pass(user, psw)
-    print(match)
     if match:
         conn.sendall("success".encode(FORMAT))
         add_id(user, addr)
     else:
         conn.sendall("error".encode(FORMAT))
 
-        # while not match:
-        #     conn.send("err".encode(FORMAT))
-        #     psw = conn.recv(1024).decode(FORMAT)
-        #     if db.check_pass(user, psw):
-        #         conn.send("ready".encode(FORMAT))
-        #         add_id(user, addr)
-        #         break
-        #     else:
-        #         match = False
 
 
 def change_password(conn):
+    conn.send("h".encode(FORMAT))
     user = conn.recv(1024).decode(FORMAT)
+    conn.send("h".encode(FORMAT))
 
-    # check database
-    existed = db.check_user_existed(user)
-
-    if not existed:
-        while not existed:
-            conn.send("not existed".encode(FORMAT))
-            user = conn.recv(1024).decode(FORMAT)
-            if db.check_user_existed(user):
-                conn.send("ready".encode(FORMAT))
-                break
-            else:
-                existed = False
-    else:
-        conn.send("psw".encode(FORMAT))
-
-    psw = conn.recv(1024).decode(FORMAT)
-
-    match = db.check_pass(user, psw)
-
-    if match:
-        conn.sendall("success".encode(FORMAT))
-    else:
-        while not match:
-            conn.send("err".encode(FORMAT))
-            psw = conn.recv(1024).decode(FORMAT)
-            if db.check_pass(user, psw):
-                conn.send("ready".encode(FORMAT))
-                break
-            else:
-                match = False
 
     new_psw = conn.recv(1024).decode(FORMAT)
     db.update_info('password', user, new_psw)
 
 def check_user(conn):
+
+    conn.send("2".encode(FORMAT))
     user = conn.recv(1024).decode(FORMAT)
+    conn.send("1".encode(FORMAT))
 
-    # check database
-    existed = db.check_user_existed(user)
-    if not existed:
-        conn.send("not existed".encode(FORMAT))
-    else:
-        conn.send("existed".encode(FORMAT))
-        opt = conn.recv(1024).decode(FORMAT)
-        if opt == '-find':
-            if db.check_user_existed(user):
-                conn.send(f"account named {user} existed".encode(FORMAT))
-            else:
-                conn.send(f"account named {user} not existed".encode(FORMAT))
-        elif opt == '-online':
-            if isOnline(online, user):
-                conn.send(f"{user} now online".encode(FORMAT))
-            else:
-                conn.send(f"{user} not active".encode(FORMAT))
+    opt = conn.recv(1024).decode(FORMAT)
 
+    if opt == '-online':
+        if isOnline(online, user):
+            conn.send(f"{user} now online".encode(FORMAT))
         else:
-            result = db.check_user_info(opt, user)
-            conn.sendall(result.encode(FORMAT))
+            conn.send(f"{user} not active".encode(FORMAT))
+
+    else:
+        result = db.check_user_info(opt, user)
+        conn.sendall(result.encode(FORMAT))
 
 
 def setup_info(conn, user):
+    conn.send("a".encode(FORMAT))
     opt = conn.recv(1024).decode(FORMAT)
 
     if opt == '-fullname':
+        conn.send("a".encode(FORMAT))
+
         change = conn.recv(1024).decode(FORMAT)
         db.update_info('fullname', user, change)
 
     elif opt == '-date':
+        conn.send("a".encode(FORMAT))
+
         change = conn.recv(1024).decode(FORMAT)
         db.update_info('dob', user, change)
 
     elif opt == '-note':
+        conn.send("a".encode(FORMAT))
+
         change = conn.recv(1024).decode(FORMAT)
         db.update_info('note', user, change)
 
@@ -182,6 +142,9 @@ def handle_client(conn, addr):
             elif option == 'checkdata':
                 checkdata(conn)
 
+            elif option == 'checkpass':
+                checkpass(conn)
+
             elif option == 'signup':
                 signUp(conn)
 
@@ -192,7 +155,8 @@ def handle_client(conn, addr):
                 check_user(conn)
 
             elif option == 'setupinfo':
-                user = 'hoang'
+                conn.send("1".encode(FORMAT))
+                user = conn.recv(1024).decode(FORMAT)
                 setup_info(conn, user)
 
             elif option == 'quit':

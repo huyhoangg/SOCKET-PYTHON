@@ -38,7 +38,7 @@ def check_user_info(type, name):
     day = f"dob of {name} : {result[0]['dob']}"
     note = f"note of {name} : {result[0]['note']}"
     point = f"win point of {name} : {result[0]['point']}"
-    alldata = f"fullname : {fname} || dob : {day} || note : {note} || win point : {point}"
+    alldata = f"{fname} \n {day} \n {note} \n {point}"
 
     if type == '-show_fullname':
         return fname
