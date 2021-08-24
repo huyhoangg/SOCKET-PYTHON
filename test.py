@@ -1,5 +1,8 @@
-
+import tkinter.filedialog
 from tkinter import *
+import openpyxl
+import pprint
+
 def register():
     global screenRegis
     screenRegis = Toplevel(screen)
@@ -59,6 +62,21 @@ def showNoteGUI():
 
     Button(show_note_Scr, text="Watch",state="disable", width=20, height=1, bg="maroon1", fg="white").pack(pady= 10)
 
+def get_cell_value_list(sheet):
+    return([[cell.value for cell in row] for row in sheet])
+
+def fileGUI():
+    file = tkinter.filedialog.askopenfile(title = "Select a File",
+                                          filetypes = (("Exel files",
+                                                        "*.xlsx*"),
+                                                       ("all files",
+                                                        "*.*")))
+    wb = openpyxl.load_workbook(file.name)
+    sheet = wb['Sheet1']
+
+    all_cell_value_with_range = get_cell_value_list(sheet['A1:T20'])
+    print(all_cell_value_with_range[7][0])
+
 
 def homepage(user):
     global Hscreen
@@ -89,6 +107,9 @@ def homepage(user):
     Button(text="Find online user", bg="maroon3", fg="cyan", height="2", width="20").place(x=330, y=310)
     Button(text="Show everything", bg="violetred3", fg="cyan", height="2", width="20").place(x=530, y=310)
 
+
+    Button(text="add file", bg="violetred3", fg="cyan", height="2", width="20",command=fileGUI).place(x=530, y=480)
+
     Hscreen.mainloop()
 
 
@@ -107,5 +128,17 @@ def main_screen():
 
     screen.mainloop()
 
-user = "hoang"
-homepage(user)
+clients = {}
+clienta = "1111111"
+clients[clienta] = '[INVITATION] henry from now'
+clientb = "12a3122"
+clients[clientb] = 'nguye'
+clientc = "3123111"
+clients[clientc] = 'le'
+print(clients[clienta][0:12])
+for a in clients:
+    if clients[a][0:12] == "[INVITATION]":
+        print(1)
+    else:
+        pass
+print('hello')

@@ -1,5 +1,6 @@
 import socket
 import threading
+import tkinter.filedialog
 import tkinter.messagebox
 
 import stdiomask
@@ -429,6 +430,79 @@ def on_closing():
         Hscreen.destroy()
         client.close()
 
+
+def fileGUI(user):
+    filestring = tkinter.filedialog.askopenfile(title = "Select a File",
+                                          filetypes = (("Exel files",
+                                                        "*.xlsx*"),
+                                                       ("all files",
+                                                        "*.*")))
+    client.sendall('upload'.encode(FORMAT))
+    path = str(filestring.name)
+
+    client.recv(1024)
+    client.send(path.encode(FORMAT))
+    client.recv(1024)
+    client.send(user.encode(FORMAT))
+
+def showListOnline():
+    client.sendall('showList'.encode(FORMAT))
+    client.recv(1024)
+    list_user = client.recv(1024).decode(FORMAT)
+    Label(inviteS, text = list_user, bg="cyan2",fg="black", font=(15)).place(x=100,y=100)
+
+def invite(user):
+    client.sendall('invite'.encode(FORMAT))
+    fr = friend.get()
+    client.recv(1024)
+    client.sendall(user.encode(FORMAT))
+    client.recv(1024)
+    client.sendall(fr.encode(FORMAT))
+
+
+def inviteGUI(user) :
+    global inviteS
+    inviteS = Toplevel(Hscreen)
+    inviteS.title("Invite friend to game ")
+    inviteS.geometry("500x300")
+    global friend
+    friend = StringVar()
+
+    global fr_entry
+
+    Label(inviteS, text="Search for friend ", bg="cyan2", font=("Calibri", 13), width="25").pack()
+    Label(inviteS, text="").pack()
+    Label(inviteS, text="who are you looking for ").pack()
+    fr_entry = Entry(inviteS, textvariable=friend, width="35")
+    fr_entry.pack()
+
+    Button(inviteS, text="show online",command = showListOnline).place(x=330, y=64)
+    Button(inviteS, text="invite",command = lambda :invite(user)).place(x=330, y=84)
+
+def invitationGUI(user) :
+    global invitationS
+    invitationS = Toplevel(Hscreen)
+    invitationS.title("Invitation from your friend to game ")
+    invitationS.geometry("500x300")
+
+
+    # Button(inviteS, text="show online",command = showListOnline).place(x=330, y=64)
+    # Button(inviteS, text="invite",command = lambda :invite(user)).place(x=330, y=84)
+
+def listenInvite():
+    while True:
+        try:
+            cmd = client.recv(1024).decode(FORMAT)
+            # if cmd[0:12] == "[INVITATION]":
+            #     print('wtf going')
+            # else:
+            #     pass
+            print(cmd)
+        except:
+            print('error')
+            break
+
+
 def homepage(user):
     global Hscreen
     Hscreen = Toplevel(screenLogin)
@@ -457,6 +531,11 @@ def homepage(user):
     Button(Hscreen,text="Find your friend", bg="maroon2", fg="cyan", height="2", width="20",command = findGUI).place(x=130, y=310)
     Button(Hscreen,text="Find online user", bg="maroon3", fg="cyan", height="2", width="20",command=lambda :showGUI("-online")).place(x=330, y=310)
     Button(Hscreen,text="Show everything", bg="violetred3", fg="cyan", height="2", width="20",command=lambda :showGUI("-show_all")).place(x=530, y=310)
+
+    Button(Hscreen, text="Invite", bg="violetred3", fg="cyan", height="2", width="20",command=lambda :inviteGUI(user)).place(x=160, y=480)
+    Button(Hscreen, text="Invitation", bg="violetred3", fg="cyan", height="2", width="20",command=lambda :invitationGUI(user)).place(x=160, y=530)
+    Button(Hscreen, text="Upload map", bg="violetred3", fg="cyan", height="2", width="20",command=lambda :fileGUI(user)).place(x=330, y=480)
+
 
     Hscreen.protocol("WM_DELETE_WINDOW", on_closing)
 
@@ -546,7 +625,10 @@ def validate():
     msg = client.recv(1024).decode()
     if msg == "success":
         Label(screenLogin, text="Login success",fg="green", font=("Calibri", 13), width="25").place(x=90, y=200)
+        screenLogin.withdraw()
+        #screen.withdraw()
         homepage(user)
+
     else:
         Label(screenLogin, text="Wrong password",fg="red", font=("Calibri", 13), width="25").place(x=90, y=200)
 
@@ -579,7 +661,7 @@ def login1():
     Label(screenLogin, text="").pack()
 
     global b
-    b= Button(screenLogin, text="Login",state="disabled", width=10, height=1, bg="black", fg="white", command = validate)
+    b = Button(screenLogin, text="Login",state="disabled", width=10, height=1, bg="black", fg="white", command = validate)
     b.pack()
 
 
@@ -598,4 +680,5 @@ def main_screen():
 
     screen.mainloop()
 
-main_screen()
+thread1 = threading.Thread(target=main_screen)
+thread1.start()

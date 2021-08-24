@@ -1,6 +1,7 @@
 import socket
 import threading
 import db as db
+import game as game
 
 HOST = "127.0.0.1"
 PORT = 20202
@@ -13,6 +14,8 @@ s.listen(5)
 
 online = []
 id = []
+
+clients = {}
 
 def isOnline(online, name):
     for i in range(len(online)):
@@ -75,6 +78,7 @@ def login(conn, addr):
     if match:
         conn.sendall("success".encode(FORMAT))
         add_id(user, addr)
+        clients[conn] = user
     else:
         conn.sendall("error".encode(FORMAT))
 
@@ -159,9 +163,38 @@ def handle_client(conn, addr):
                 user = conn.recv(1024).decode(FORMAT)
                 setup_info(conn, user)
 
+            elif option == 'showList':
+                conn.send("1".encode(FORMAT))
+
+                s = f"list user online: {online}"
+                conn.send(s.encode(FORMAT))
+
+            elif option == 'invite':
+                conn.send("1".encode(FORMAT))
+
+                user = conn.recv(1024).decode(FORMAT)
+                conn.send("1".encode(FORMAT))
+
+                fr = conn.recv(1024).decode(FORMAT)
+                for client in clients:
+                    if (clients[client] == fr):
+                        client.send(f"[INVITATION] {user} invite you to game".encode(FORMAT))
+                        print('x')
+
+            elif option == 'upload':
+                conn.send("1".encode(FORMAT))
+                path = conn.recv(1024).decode(FORMAT)
+                conn.send("1".encode(FORMAT))
+                user = conn.recv(1024).decode(FORMAT)
+
+                datamap = game.read_map(path)
+                game.addMap(user, datamap)
+
+
             elif option == 'quit':
                 print(f"disconnected from {addr}")
                 remove_online(addr)
+                del clients[conn]
                 conn.close()
                 break
 
