@@ -206,9 +206,9 @@ def checkpass(user):
         Label(passScreen, text="Password true !", fg="green", font=("Calibri", 10), width="25").place(x=100, y=90)
         changepassBut["state"] = "normal"
 
-def changePass(user):
+def changePass(user,newpass, opt):
     client.sendall("changepass".encode(FORMAT))
-    newpass = newPass.get()
+    # newpass = newPass.get()
 
     client.recv(1024)
 
@@ -216,7 +216,24 @@ def changePass(user):
     client.recv(1024)
 
     client.sendall(newpass.encode(FORMAT))
+    client.recv(1024)
+
+    client.sendall(opt.encode(FORMAT))
     Label(passScreen, text="Update success !", fg="green", font=("Calibri", 13), width="25").place(x=90, y=200)
+
+def askEncryptPassChange(user):
+    answer = tkinter.messagebox.askokcancel(
+        title='Confirmation',
+        message='Do you want to encrypt your password')
+
+    if answer:
+        psw = newPass.get()
+        encryp = encrypt(psw)
+        changePass(user, encryp, "1")
+
+    else:
+        psw = newPass.get()
+        changePass(user, psw, "0")
 
 
 def changepassGUI(user):
@@ -248,7 +265,7 @@ def changepassGUI(user):
     Label(passScreen, text="").pack()
 
     global changepassBut
-    changepassBut = Button(passScreen, text="Change Password", state="disabled", width=20, height=1, bg="black", fg="white",command = lambda :changePass(user))
+    changepassBut = Button(passScreen, text="Change Password", state="disabled", width=20, height=1, bg="black", fg="white",command = lambda : askEncryptPassChange(user))
 
     changepassBut.pack()
 
@@ -451,14 +468,6 @@ def showListOnline():
     list_user = client.recv(1024).decode(FORMAT)
     Label(inviteS, text = list_user, bg="cyan2",fg="black", font=(15)).place(x=100,y=100)
 
-def invite(user):
-    client.sendall('invite'.encode(FORMAT))
-    fr = friend.get()
-    client.recv(1024)
-    client.sendall(user.encode(FORMAT))
-    client.recv(1024)
-    client.sendall(fr.encode(FORMAT))
-
 
 def inviteGUI(user) :
     global inviteS
@@ -477,7 +486,6 @@ def inviteGUI(user) :
     fr_entry.pack()
 
     Button(inviteS, text="show online",command = showListOnline).place(x=330, y=64)
-    Button(inviteS, text="invite",command = lambda :invite(user)).place(x=330, y=84)
 
 def invitationGUI(user) :
     global invitationS
@@ -541,6 +549,10 @@ def homepage(user):
 
     Hscreen.mainloop()
 
+def encrypt(text, encoding='utf8', errors='surrogatepass'):
+    bits = bin(int.from_bytes(text.encode(encoding, errors), 'big'))[2:]
+    return bits.zfill(8 * ((len(bits) + 7) // 8))
+
 def checkuser_R():
     client.sendall("checkdata".encode(FORMAT))
 
@@ -553,15 +565,18 @@ def checkuser_R():
     else:
         Label(screenRegis, text="This is an existed account",fg="red", font=("Calibri", 10), width="25").place(x=100, y=110)
 
-def regis():
+def regis(user, psw, opt):
     client.send("signup".encode(FORMAT))
 
-    user = username.get()
-    psw = password.get()
+    # user = username.get()
+    # psw = password.get()
 
     client.send(user.encode(FORMAT))
     client.recv(1024)
     client.send(psw.encode(FORMAT))
+    client.recv(1024)
+    client.send(opt.encode(FORMAT))
+
     Label(screenRegis, text="Register successfully", fg="green", font=("Calibri", 10), width="25").place(x=100,y=220)
 
 
@@ -598,7 +613,7 @@ def register1():
     password_lable.pack()
     Label(screenRegis, text="").pack()
     global buttonR
-    buttonR = Button(screenRegis, text="Register",state = "disable",command = regis, width=10, height=1, bg="#0d8bf0", fg="black")
+    buttonR = Button(screenRegis, text="Register",state = "disable",command = lambda : askEncrypt("reg"), width=10, height=1, bg="#0d8bf0", fg="black")
     buttonR.pack()
 
 def checkuser():
@@ -613,14 +628,45 @@ def checkuser():
         Label(screenLogin, text="Account found",fg="green", font=("Calibri", 10), width="25").place(x=100, y=90)
         b["state"] = "normal"
 
-def validate():
+def askEncrypt(cmd):
+    answer = tkinter.messagebox.askokcancel(
+        title='Confirmation',
+        message='Do you want to encrypt your password')
+
+    if answer:
+        if cmd == "login":
+            user = usernameLogin.get()
+            psw = passwordLogin.get()
+            encryp = encrypt(psw)
+            validate(user, encryp, "1")
+        elif cmd == "reg":
+            user = username.get()
+            psw = password.get()
+            encryp = encrypt(psw)
+            regis(user, encryp, "1")
+
+
+    else:
+        if cmd == "login":
+            user = usernameLogin.get()
+            psw = passwordLogin.get()
+            validate(user, psw, "0")
+        elif cmd == "reg":
+            user = username.get()
+            psw = password.get()
+            regis(user, psw, "1")
+
+def validate(user, psw, opt):
     client.send("login".encode(FORMAT))
 
-    user = usernameLogin.get()
-    psw = passwordLogin.get()
+    # user = usernameLogin.get()
+    # psw = passwordLogin.get()
 
     client.send(user.encode(FORMAT))
     client.recv(1024)
+    client.send(opt.encode(FORMAT))
+    client.recv(1024)
+
     client.send(psw.encode(FORMAT))
     msg = client.recv(1024).decode()
     if msg == "success":
@@ -661,7 +707,7 @@ def login1():
     Label(screenLogin, text="").pack()
 
     global b
-    b = Button(screenLogin, text="Login",state="disabled", width=10, height=1, bg="black", fg="white", command = validate)
+    b = Button(screenLogin, text="Login",state="disabled", width=10, height=1, bg="black", fg="white", command = lambda :askEncrypt("login"))
     b.pack()
 
 
@@ -679,6 +725,7 @@ def main_screen():
     Label(text="").pack()
 
     screen.mainloop()
+
 
 thread1 = threading.Thread(target=main_screen)
 thread1.start()

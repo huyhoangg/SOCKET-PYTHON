@@ -33,6 +33,10 @@ def remove_online(addr):
             online.remove(name)
             break
 
+def decrypt(bits, encoding='utf8', errors='surrogatepass'):
+    n = int(bits, 2)
+    return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode(encoding, errors) or '\0'
+
 def add_id(user, addr):
     s = str(addr) + '-' + user
     id.append(s)
@@ -43,7 +47,13 @@ def signUp(conn):
     user = conn.recv(1024).decode(FORMAT)
 
     conn.send("a".encode(FORMAT))
-    psw = conn.recv(1024).decode(FORMAT)
+    psw_ = conn.recv(1024).decode(FORMAT)
+    conn.send("a".encode(FORMAT))
+    opt = conn.recv(1024).decode(FORMAT)
+    if opt == "1" :
+        psw = decrypt(psw_)
+    else:
+        psw = psw_
 
     db.insert_data(user, psw)
 
@@ -72,8 +82,14 @@ def login(conn, addr):
     user = conn.recv(1024).decode(FORMAT)
 
     conn.send("a".encode(FORMAT))
+    opt = conn.recv(1024).decode(FORMAT)
+    conn.send("a".encode(FORMAT))
+    psw_ = conn.recv(1024).decode(FORMAT)
+    if opt == "1" :
+        psw = decrypt(psw_)
+    else:
+        psw = psw_
 
-    psw = conn.recv(1024).decode(FORMAT)
     match = db.check_pass(user, psw)
     if match:
         conn.sendall("success".encode(FORMAT))
@@ -90,7 +106,15 @@ def change_password(conn):
     conn.send("h".encode(FORMAT))
 
 
-    new_psw = conn.recv(1024).decode(FORMAT)
+    new_psw_ = conn.recv(1024).decode(FORMAT)
+    conn.send("h".encode(FORMAT))
+    opt = conn.recv(1024).decode(FORMAT)
+
+    if opt == "1":
+        new_psw = decrypt(new_psw_)
+    else:
+        new_psw = new_psw_
+
     db.update_info('password', user, new_psw)
 
 def check_user(conn):

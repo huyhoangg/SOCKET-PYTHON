@@ -128,17 +128,13 @@ def main_screen():
 
     screen.mainloop()
 
-clients = {}
-clienta = "1111111"
-clients[clienta] = '[INVITATION] henry from now'
-clientb = "12a3122"
-clients[clientb] = 'nguye'
-clientc = "3123111"
-clients[clientc] = 'le'
-print(clients[clienta][0:12])
-for a in clients:
-    if clients[a][0:12] == "[INVITATION]":
-        print(1)
-    else:
-        pass
-print('hello')
+def encrypt(text, encoding='utf8', errors='surrogatepass'):
+    bits = bin(int.from_bytes(text.encode(encoding, errors), 'big'))[2:]
+    return bits.zfill(8 * ((len(bits) + 7) // 8))
+
+
+def decrypt(bits, encoding='utf8', errors='surrogatepass'):
+    n = int(bits, 2)
+    return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode(encoding, errors) or '\0'
+
+
